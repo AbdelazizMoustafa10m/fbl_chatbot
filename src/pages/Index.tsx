@@ -4,7 +4,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 
-const WELCOME_MESSAGE = "Hello! Welcome to our app! How can I help you?";
+const WELCOME_MESSAGE = "Hello, welcome to our FBL & OTA Knowledge Hub😃!\nHow can I help you?";
 
 const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -26,13 +26,57 @@ const Index = () => {
     setMessages((prev) => [...prev, { message, isAi: false }]);
     setIsTyping(true);
     
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      console.log('Sending request to API:', message);
+      const response = await fetch('http://localhost:8000/api/v1/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: message,
+          conversation_id: Date.now().toString()
+        })
+      });
+
+      console.log('API Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('API Error response:', errorData);
+        
+        if (response.status === 0) {
+          throw new Error('Could not connect to the API server. Please make sure it is running.');
+        }
+        
+        throw new Error(
+          errorData?.detail || 
+          `Server error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log('API Response data:', data);
+
+      if (!data.answer && data.error) {
+        throw new Error(data.error);
+      }
+
       setMessages((prev) => [
         ...prev,
-        { message: "This is a simulated response. Connect to an AI API to get real responses!", isAi: true },
+        { message: data.answer, isAi: true },
       ]);
-    }, 1500);
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      let errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      
+      setMessages((prev) => [
+        ...prev,
+        { message: errorMessage, isAi: true },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   if (showWelcome) {
