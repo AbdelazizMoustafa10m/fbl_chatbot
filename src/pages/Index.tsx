@@ -28,7 +28,7 @@ const Index = () => {
     
     try {
       console.log('Sending request to API:', message);
-      const response = await fetch('https://fblotarag-production.up.railway.app/api/v1/query', {
+      const response = await fetch('https://agent.n8ndeutschauto.de/api/v1/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
